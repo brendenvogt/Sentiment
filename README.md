@@ -30,7 +30,7 @@ Response
 
 #### Postman
 ```
-Postman to http://localhost:5000/predict
+POST http://localhost:5000/predict
 ```
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentPostman.png"/>
 <br/>
