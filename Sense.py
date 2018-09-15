@@ -1,85 +1,121 @@
-# import the necessary packages
-from keras.applications import ResNet50
-from keras.preprocessing.image import img_to_array
-from keras.applications import imagenet_utils
-import tensorflow as tf
-from PIL import Image
+##-import the necessary packages
+from keras.datasets import imdb
+##
+from keras import models
+from keras import layers
+
+# import tensorflow as tf
 import numpy as np
 import flask
 import io
 
-# initialize our Flask application and the Keras model
+##-todo use WSGI server for production
 app = flask.Flask(__name__)
+##-model
 model = None
-graph = None 
+# graph = None 
+word_index = None
 
-def load_model():
-    # load the pre-trained Keras model (here we are using a model
-    # pre-trained on ImageNet and provided by Keras, but you can
-    # substitute in your own networks just as easily)
-    global model
-    model = ResNet50(weights="imagenet")
+train_data = None
+train_labels = None
+test_data = None 
+test_labels = None
 
-    global graph
-    graph = tf.get_default_graph()
+history = None
 
-def prepare_image(image, target):
-    # if the image mode is not RGB, convert it
-    if image.mode != "RGB":
-        image = image.convert("RGB")
+def load_data():
+    
+	##load data
+	global train_data, train_labels, test_data, test_labels	
+	(train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=10000)
 
-    # resize the input image and preprocess it
-    image = image.resize(target)
-    image = img_to_array(image)
-    image = np.expand_dims(image, axis=0)
-    image = imagenet_utils.preprocess_input(image)
+    ##load word index
+	global word_index
+	word_index = imdb.get_word_index()
 
+def create_model():
+	global model
+	model = models.Sequential()
+	model.add(layers.Dense(16, activation='relu', input_shape=(10000,)))
+	model.add(layers.Dense(16, activation='relu'))
+	model.add(layers.Dense(1, activation='sigmoid'))
 
+	model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
 
-    # return the processed image
-    return image
+def prep_data(sequences, dimension=10000):
+	results = np.zeros((len(sequences), dimension))
+	for i, sequence in enumerate(sequences):
+		results[i,sequence] = 1.
+	return results
+
+def train_model():
+	global history
+	
+	x_train = prep_data(train_data)
+	x_test = prep_data(test_data)
+	
+	y_train = np.asarray(train_labels).astype('float32')
+	y_test = np.asarray(test_labels).astype('float32')
+
+	x_val = x_train[:10000]
+	partial_x_train = x_train[10000:]
+
+	y_val = y_train[:10000]
+	partial_y_train = y_train[10000:]
+
+	history = model.fit( partial_x_train, partial_y_train, epochs=5, batch_size=512, validation_data=(x_val,y_val))
+
+	history_dict = history.history
+	for k,v in history_dict.items():
+		print(f"{k} has {v}")
+	
+def visualize(history):
+	import matplotlib.pyplot as plt
+
+	history_dict = history.history
+	loss_values = history_dict['loss']
+	val_loss_values = history_dict['val_loss']
+
+	epochs = range(1, len(loss_values) + 1)
+
+	plt.plot(epochs, loss_values, 'bo', label='Training Loss')
+	plt.plot(epochs, val_loss_values, 'b', label='Validation Loss')
+	plt.title('Training and Validation Loss')
+	plt.xlabel('Epochs')
+	plt.ylabel('Loss')
+	plt.legend()	
+
+	img = io.BytesIO()
+	plt.savefig(img)
+	img.seek(0)
+
+	return img	
+	
+
+def decode_review(data):
+	'''
+		takes in individual review vector and outputs original review text
+	'''
+	reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
+	decoded_review = ' '.join([reverse_word_index.get(i -3, '?') for i in data])
+	return decoded_review
+
+@app.route("/train", methods=["GET"])
+def train():
+	load_data()
+	create_model()
+	train_model()
+	
+
+	resp = flask.jsonify(success=True)
+	return resp
 
 @app.route("/predict", methods=["POST"])
 def predict():
-	# initialize the data dictionary that will be returned from the
-	# view
-	data = {"success": False}
-
-	# ensure an image was properly uploaded to our endpoint
-	if flask.request.method == "POST":
-		if flask.request.files.get("image"):
-			# read the image in PIL format
-			image = flask.request.files["image"].read()
-			image = Image.open(io.BytesIO(image))
-
-			# preprocess the image and prepare it for classification
-			image = prepare_image(image, target=(224, 224))
-
-			# classify the input image and then initialize the list
-			# of predictions to return to the client
-			with graph.as_default():
-				preds = model.predict(image)		
-				# preds = model.predict(image)
-				results = imagenet_utils.decode_predictions(preds)
-				data["predictions"] = []
-
-				# loop over the results and add them to the list of
-				# returned predictions
-				for (imagenetID, label, prob) in results[0]:
-					r = {"label": label, "probability": float(prob)}
-					data["predictions"].append(r)
-
-				# indicate that the request was a success
-				data["success"] = True
-
-	# return the data dictionary as a JSON response
-	return flask.jsonify(data)
-
-
-# if this is the main thread of execution first load the model and
-# then start the server
+	visualize(history)
+	return send_file(img, mimetype='image/png')
+	
 if __name__ == "__main__":
     print(("* Loading Keras model and Flask starting server..."
         "please wait until server has fully started"))
-    load_model()
     app.run()
