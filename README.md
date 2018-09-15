@@ -2,22 +2,23 @@
 # Sentiment Machine Learning Model
 #### A text sentiment ML Model written in **Python**.
 This model makes use of Google's Machine learning api named **Keras** to assemble and train the model. Keras uses a Google's ML frameworks called **Tensorflow** as the backend for this model. <br/>
-The model is **trained on 50,000 reviews** from the imdb dataset. <br/>
-Hosted through a **Flask server**, the model can be tested by sending an HTTP POST request to "localhost:5000/predict" to make predictions
+The model is **trained on 50,000 reviews** from the imdb dataset, <br/>
+and is through a **Flask server**. <br/>
+The model can be tested by sending an HTTP POST request to "localhost:5000/predict" to make predictions.
 
 ## Usage 
-### Install Necessary Libraries
-### Run Sense.py
+### 1. Install Necessary Libraries
+### 2. Run Sense.py
 ```
 python Sense.py
 ```
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentStartup.png"/>
 <br/>
 
-### Test Endpoint
+### 3. Test Endpoint
 <br/>
 
-#### Curl
+#### 3.A Curl
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"text":"hello"}' http://localhost:5000/predict
 ```
@@ -28,9 +29,14 @@ Response
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentCurl.png"/>
 <br/>
 
-#### Postman
+#### 3.B Postman
 ```
-POST http://localhost:5000/predict
+http://localhost:5000/predict
+```
+```
+{
+	"text":"hello"
+}
 ```
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentPostman.png"/>
 <br/>
