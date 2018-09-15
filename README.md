@@ -17,7 +17,7 @@ python Sense.py
 ### Test Endpoint
 <br/>
 
-####Curl
+#### Curl
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"text":"hello"}' http://localhost:5000/predict
 ```
@@ -28,7 +28,7 @@ Response
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentCurl.png"/>
 <br/>
 
-####Postman
+#### Postman
 ```
 Postman to http://localhost:5000/predict
 ```
