@@ -19,7 +19,7 @@ pip install flask requests
 ```
 python -m pip install numpy scipy matplotlib
 ```
-
+<br/>
 ### 2. Run Sense.py
 ```
 python Sense.py
@@ -49,5 +49,3 @@ http://localhost:5000/predict
 }
 ```
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentPostman.png"/>
-<br/>
-
