@@ -20,7 +20,8 @@ pip install flask requests
 python -m pip install numpy scipy matplotlib
 ```
 <br/>
-### 2. Run
+### Run
+#### Sense.py
 ```
 python Sense.py
 ```
