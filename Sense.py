@@ -1,29 +1,21 @@
-##-import the necessary packages
+## Text Sentiment Machine Learning Model
+
 from keras.datasets import imdb
-##
+
 from keras import models
 from keras import layers
 from keras.models import load_model
 
 import numpy as np
 import flask
-import io
-import pickle
 import os.path
 
-##-todo use WSGI server for production
 app = flask.Flask(__name__)
 
-##-model
 model = None
 word_index = None
 
 num_words = 10000
-
-def load_data():
-	global word_index
-	if not word_index:
-		word_index = imdb.get_word_index()
 
 def create_model():
 	model = models.Sequential()
@@ -83,87 +75,27 @@ def train_model(model):
 	return history
 
 def create_new_model():
-	load_data()
+	load_word_list()
 	model = create_model()
 	compile_model(model)
 	train_model(model)
 	return model
 
-# def save_model(model, filename):
-	
-# 	model_filename = f"{filename}.json"
-# 	weight_filename = f"{filename}.h5"
+# Data Preprocessing Helper Methods
 
-# 	# serialize model to JSON
-# 	print("Saving Model")
-# 	model_json = model.to_json()
-# 	with open(model_filename, "w") as f:
-# 		f.write(model_json)
-	
-# 	# serialize weights to HDF5
-# 	print("Saving Weights")
-# 	model.save_weights(weight_filename)
-	
-# 	print("Done")
-
-# def load_model(filename):
-# 	global model 
-# 	model_filename = f"{filename}.json"
-# 	weight_filename = f"{filename}.h5"
-
-# 	# check if saved model exists
-# 	has_model = os.path.isfile(model_filename) 
-# 	has_weights = os.path.isfile(weight_filename) 
-# 	if not has_model and not has_weights:
-# 		return None
-
-# 	# deserialize model from JSON
-# 	print("Loading Model")
-# 	with open(model_filename, 'r') as json_file:
-# 		loaded_model_json = json_file.read()
-# 		model = model_from_json(loaded_model_json)
-		
-# 	# deserialize weights from HDF5
-# 	print("Loading Weights")
-# 	model.load_weights(weight_filename)
-	
-# 	#compile
-# 	print("Compiling")
-# 	compile_model()
-
-# 	# return model
-# 	return model
-
-def visualize(history):
-	import matplotlib.pyplot as plt
-
-	history_dict = history.history
-	loss_values = history_dict['loss']
-	val_loss_values = history_dict['val_loss']
-
-	epochs = range(1, len(loss_values) + 1)
-
-	plt.plot(epochs, loss_values, 'bo', label='Training Loss')
-	plt.plot(epochs, val_loss_values, 'b', label='Validation Loss')
-	plt.title('Training and Validation Loss')
-	plt.xlabel('Epochs')
-	plt.ylabel('Loss')
-	plt.legend()	
-
-	img = io.BytesIO()
-	plt.savefig(img)
-	img.seek(0)
-
-	return img	
-	
+def load_word_list():
+	global word_index
+	if not word_index:
+		word_index = imdb.get_word_index()
 
 def decode_review(data):
+	load_word_list()
 	reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
 	decoded_review = ' '.join([reverse_word_index.get(i - 3, '?') for i in data])
 	return decoded_review
 
 def encode_review(review_text):
-	load_data()
+	load_word_list()
 	vector = [word_index.get(i,-2)+3 for i in review_text.split(" ")]
 	vector = prep_data([vector])
 	
@@ -174,15 +106,20 @@ def predict_review(review_text):
 	pred = model.predict(vector)
 	return pred
 
-
+# Routes
 @app.route("/predict", methods=["POST"])
 def predict():
+	
+	# Prep default response
 	data = dict()
 	data["success"] = False
 	data["predictions"] = []
 
-	review_text = flask.request.form['text']	
-	pred = predict_review(review_text)
+	# Get POST json content
+	json = flask.request.get_json()
+	
+	# Encode text into vector and make prediction
+	pred = predict_review(json["text"])
 	if pred:
 		for i in pred:
 			data["predictions"].append(str(i))
@@ -191,20 +128,27 @@ def predict():
 	resp = flask.jsonify(data)
 	return resp
 	
+
 if __name__ == "__main__":
 	print(("* Loading model and  starting Flask server..."
 	"please wait until server has fully started"))
 	
 	model_filename = "model.h5"
+
+	# Check if file exists
 	has_model = os.path.isfile(model_filename) 
-	if (has_model):
-		model = load_model(model_filename)
-	else:
+	
+	# Create if not found
+	if not has_model:
 		print("No saved model found, creating new one")
 		model = create_new_model()
+	else:
+		model = load_model(model_filename)
 
+	# Make test prediction
 	predict_review("hello")
 
+	# Start Flask
 	app.run()
 
 	# https://medium.com/coinmonks/deploy-your-first-deep-learning-neural-network-model-using-flask-keras-tensorflow-in-python-f4bb7309fc49
