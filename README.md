@@ -8,6 +8,18 @@ The model can be tested by sending an HTTP POST request to "localhost:5000/predi
 
 ## Usage 
 ### 1. Install Necessary Libraries
+#### Install Keras and Tensorflow
+https://keras.io/
+
+#### Install Flask
+```
+pip install flask requests
+```
+#### Install Numpy
+```
+python -m pip install numpy scipy matplotlib
+```
+
 ### 2. Run Sense.py
 ```
 python Sense.py
@@ -16,8 +28,6 @@ python Sense.py
 <br/>
 
 ### 3. Test Endpoint
-<br/>
-
 #### 3.A Curl
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"text":"hello"}' http://localhost:5000/predict
