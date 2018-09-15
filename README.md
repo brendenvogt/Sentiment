@@ -19,12 +19,12 @@ pip install flask requests
 ```
 python -m pip install numpy scipy matplotlib
 ```
-<br/>
+
 ### Run
-#### Sense.py
 ```
 python Sense.py
 ```
+
 <img src="https://github.com/brendenvogt/Sentiment/raw/master/resources/SentimentStartup.png"/>
 <br/>
 
