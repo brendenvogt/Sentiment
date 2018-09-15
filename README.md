@@ -3,7 +3,7 @@
 #### A text sentiment ML Model written in **Python**.
 This model makes use of Google's Machine learning api named **Keras** to assemble and train the model. Keras uses a Google's ML frameworks called **Tensorflow** as the backend for this model. <br/>
 The model is **trained on 50,000 reviews** from the imdb dataset, <br/>
-and is through a **Flask server**. <br/>
+and is served through a **Flask server**. <br/>
 The model can be tested by sending an HTTP POST request to "localhost:5000/predict" to make predictions.
 
 ## Usage 
